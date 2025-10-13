@@ -1,9 +1,9 @@
 # CatSpy — Local Phishing & URL Detector (Prototype)
 
-This repository contains a small, local prototype for phishing and URL detection. It pairs a local transformer-based classifier (DistilBERT via Hugging Face) with lightweight heuristic checks to produce a human-friendly JSON result for a simple web UI.
+This repository contains a small, local prototype for phishing and URL detection. It pairs a local transformer-based classifier (DistilBERT via Hugging Face) with lightweight heuristic checks to produce a human-friendly JSON result for a simple web UI. It now also bundles a **completely local conversational large language model** endpoint so you can run a chatbot without calling external services once the weights are downloaded.
 
 Contents
-- backend: FastAPI server, model code, utils, and a small frontend bundle (served at `/index.html`).
+- backend: FastAPI server, phishing detector, local chat model, utils, and a small frontend bundle (served at `/index.html`).
 - frontend: single-page HTML demo located at `backend/frontend/index.html`.
 
 This README explains how to run the project locally, test the API, sample test inputs, and the quality/disclaimer statement.
@@ -31,6 +31,19 @@ cd backend
 
 - http://127.0.0.1:8000/
 
+4. Try the local chatbot endpoint with curl (the first request may take a few seconds while the model downloads and warms up):
+
+```powershell
+curl -X POST "http://127.0.0.1:8000/chat" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "messages": [
+             {"role": "system", "content": "你是一名乐于助人的网络安全助手。"},
+             {"role": "user", "content": "你好，给我讲讲如何识别钓鱼邮件？"}
+           ]
+         }'
+```
+
 Alternatively, serve the frontend directory with a simple static server (optional):
 
 ```powershell
@@ -57,8 +70,14 @@ python -m http.server 8080
 		- model: object with model name, predicted label, and raw scores
 
 - POST `/train` — synchronous, small-batch training (for debugging only)
-	- Request JSON: `{ "texts": ["..."], "labels": [0,1,...] }`
-	- Response JSON: `{ "loss": float }`
+        - Request JSON: `{ "texts": ["..."], "labels": [0,1,...] }`
+        - Response JSON: `{ "loss": float }`
+
+- POST `/chat` — local conversational large language model
+        - Request JSON: `{ "messages": [{"role":"system","content":"..."}, ...] }`
+        - Response JSON: `{ "response": "assistant reply", "prompt_tokens": int, "generated_tokens": int, "model": "..." }`
+        - Notes: Provide the full conversation history in chronological order. The first call will download the
+          model (~350 MB) and can take a moment; subsequent calls are fully offline.
 
 ---
 
@@ -121,6 +140,7 @@ http://192.168.0.1/login
 ## Implementation notes
 
 - Model: the backend instantiates a local Hugging Face `DistilBertForSequenceClassification` model by default (`distilbert-base-uncased`).
+- Chatbot: the `/chat` endpoint loads `microsoft/DialoGPT-medium` locally for lightweight dialogue. You can swap to another Hugging Face causal LM by editing `ChatConfig` in `backend/chat_model.py`.
 - PEFT/LoRA: the code attempts to apply a PEFT/LoRA adapter. If your peft version or configuration requires `target_modules` the adapter may not be applied; the server catches this and continues running without PEFT (a warning is printed).
 - Heuristics: lightweight rule-based detectors are in `backend/utils.py`. The `map_model_to_frontend` function combines the model's phishing probability with heuristic-derived weights to produce the frontend `score` and `result`.
 

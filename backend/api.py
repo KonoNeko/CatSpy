@@ -7,10 +7,12 @@ from pydantic import BaseModel, Field
 from typing import List
 try:
     # When running as a package: `uvicorn backend.api:app`
+    from .chat_model import LocalChatModel
     from .model import PhishingDetector
     from .utils import map_model_to_frontend
 except ImportError:
     # When running from backend directory: `uvicorn api:app`
+    from chat_model import LocalChatModel
     from model import PhishingDetector
     from utils import map_model_to_frontend
 
@@ -24,6 +26,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 detector = PhishingDetector()
+chatbot = LocalChatModel()
 
 # Serve the frontend index.html at root to avoid file:// CORS issues
 import os
@@ -57,6 +60,22 @@ class PredictResponse(BaseModel):
     model: str = Field(default="local", description="Which model produced this prediction")
 
 
+class ChatMessage(BaseModel):
+    role: str = Field(..., description="Message role: system | user | assistant")
+    content: str = Field(..., description="Message body")
+
+
+class ChatRequest(BaseModel):
+    messages: List[ChatMessage] = Field(..., description="Conversation history in chronological order")
+
+
+class ChatResponse(BaseModel):
+    response: str
+    prompt_tokens: int
+    generated_tokens: int
+    model: str
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -75,6 +94,15 @@ def predict(req: PredictRequest):
 @app.options("/predict", include_in_schema=False)
 def predict_options():
     return Response(status_code=200)
+
+
+@app.post("/chat", response_model=ChatResponse)
+def chat(req: ChatRequest):
+    try:
+        result = chatbot.chat([msg.dict() for msg in req.messages])
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 class TrainRequest(BaseModel):
