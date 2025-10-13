@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CatSpy — Phishing & Deepfake Detection</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --accent:#4f46e5;
+      --danger:#dc2626;
+      --safe:#16a34a;
+      --warn:#d97706;
+      --border:#e5e7eb;
+      --chip:#eef2ff;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; background:var(--bg); color:var(--text);
+    }
+    header{
+      position:sticky; top:0; z-index:5;
+      backdrop-filter:saturate(180%) blur(6px);
+      background:rgba(255,255,255,0.8);
+      border-bottom:1px solid var(--border);
+    }
+    .nav{
+      max-width:1100px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; padding:14px 18px;
+    }
+    .brand{ font-weight:700; letter-spacing:.2px; }
+    .brand span{ color:var(--accent);}
+    nav a{
+      margin:0 10px; text-decoration:none; color:var(--text); padding:8px 10px; border-radius:8px;
+    }
+    nav a.active, nav a:hover{ background:var(--chip); color:var(--accent); }
+    main{ max-width:1100px; margin:20px auto; padding:0 18px 50px; }
+    .grid{
+      display:grid; grid-template-columns:repeat(12,1fr); gap:18px;
+    }
+    .card{
+      grid-column:span 12; background:var(--card); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:0 1px 2px rgba(0,0,0,0.03);
+    }
+    @media (min-width:800px){
+      .span-4{ grid-column:span 4;}
+      .span-6{ grid-column:span 6;}
+      .span-8{ grid-column:span 8;}
+    }
+    h1{ margin:8px 0 14px; font-size:24px;}
+    h2{ margin:0 0 10px; font-size:18px;}
+    p.muted{ color:var(--muted); margin-top:6px;}
+    .btn{
+      background:var(--accent); color:#fff; border:none; border-radius:10px; padding:10px 14px; cursor:pointer; font-weight:600;
+    }
+    .btn.secondary{ background:#111827; }
+    .btn.ghost{ background:transparent; color:var(--accent); border:1px solid var(--accent); }
+    .btn-row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    textarea, input[type="text"], input[type="file"], select{
+      width:100%; padding:12px; border:1px solid var(--border); border-radius:10px; background:#fff; color:var(--text);
+    }
+    .kpi{ display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:var(--card); }
+    .kpi b{ font-size:18px; }
+    .badge{ display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; border:1px solid var(--border); background:var(--chip); color:var(--accent); }
+    .result{
+      border-radius:14px; padding:14px; border:1px dashed var(--border); background:#fafafa;
+    }
+    .pill{ display:inline-block; padding:6px 10px; border-radius:999px; font-size:12px; }
+    .pill.safe{ background:#ecfdf5; color:var(--safe); border:1px solid #a7f3d0; }
+    .pill.suspicious{ background:#fff7ed; color:var(--warn); border:1px solid #fed7aa; }
+    .pill.danger{ background:#fef2f2; color:var(--danger); border:1px solid #fecaca; }
+    .hr{ height:1px; background:var(--border); margin:12px 0; }
+    .list{ list-style:none; padding:0; margin:0;}
+    .list li{ display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); }
+    .footer{
+      text-align:center; color:var(--muted); padding:30px 0; font-size:13px;
+    }
+    .chip{display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid var(--border); background:#fff;}
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .hide{ display:none !important; }
+  .logo-mark{ height:56px; width:56px; border-radius:16px; border:1px solid var(--border); background:#fff; padding:6px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav">
+      <div class="brand" style="display:flex;align-items:center;gap:10px;">
+  <img src="catspy-logo.png" data-logo="catspy-logo.png" alt="CatSpy Logo" style="height:40px;width:40px;vertical-align:middle;">
+        <span style="font-weight:700;font-size:1.25em;">CatSpy</span>
+      </div>
+      <nav>
+        <a href="#/" id="nav-home">Home</a>
+        <a href="#/phishing" id="nav-phish">Phishing/URL</a>
+        <a href="#/email" id="nav-email">Email Security</a>
+        <a href="#/deepfake" id="nav-deep">Deepfake</a>
+        <a href="#/reports" id="nav-reports">Reports</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <!-- HOME -->
+    <section id="view-home" class="grid">
+      <div class="card span-8">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <img class="logo-mark" src="catspy-logo.png" data-logo="catspy-logo.png" alt="CatSpy logo"/>
+          <h1 style="margin:0;">Welcome 👋</h1>
+        </div>
+        <p class="muted" style="margin-top:12px;">One place for phishing detection, email scanning, and deepfake analysis. Pick a module to start.</p>
+        <div class="grid" style="margin-top:10px;">
+          <div class="card span-4">
+            <h2>Phishing / URL Detector</h2>
+            <p class="muted">Paste text or URL, we’ll highlight risks.</p>
+            <div class="btn-row">
+              <a class="btn" href="#/phishing">Open</a>
+              <span class="badge">NLP + Heuristics</span>
+            </div>
+          </div>
+          <div class="card span-4">
+            <h2>Email Security</h2>
+            <p class="muted">Scan inbox, spot suspicious senders & links.</p>
+            <div class="btn-row">
+              <a class="btn" href="#/email">Open</a>
+              <span class="badge">Metrics & Charts</span>
+            </div>
+          </div>
+          <div class="card span-4">
+            <h2>Deepfake Analyzer</h2>
+            <p class="muted">Upload a video frame / face image to check authenticity.</p>
+            <div class="btn-row">
+              <a class="btn" href="#/deepfake">Open</a>
+              <span class="badge">Vision / CNN</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="span-4">
+        <div class="kpi"><b>97%</b> Avg detection accuracy (demo)</div>
+        <div class="kpi"><b>+3</b> Threat vectors protected</div>
+        <div class="kpi"><b><span id="kpi-scans">0</span></b> Scans this session</div>
+        <div class="card">
+          <h2>Quick Tips</h2>
+          <ul class="list">
+            <li><span>Hover links to preview the real domain</span> <span class="chip">Phishing</span></li>
+            <li><span>Verify sender domain alignment (SPF/DKIM)</span> <span class="chip">Email</span></li>
+            <li><span>Check eye/reflection/edges for artifacts</span> <span class="chip">Deepfake</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHISHING / URL -->
+    <section id="view-phishing" class="grid hide">
+      <div class="card span-8">
+        <h1>Phishing / URL Detector</h1>
+        <p class="muted">Paste a message or a URL. This demo uses mock analysis to illustrate the UI behavior.</p>
+        <label for="phish-input"><b>Content / URL</b></label>
+        <textarea id="phish-input" rows="8" placeholder="e.g. Dear user, your bank account is locked. Verify at http://secure-bank-login.com now…"></textarea>
+        <div class="btn-row" style="margin-top:10px;">
+          <button class="btn" id="btn-analyze">Run Analysis</button>
+          <button class="btn ghost" id="btn-clear">Clear</button>
+        </div>
+        <div class="hr"></div>
+        <div id="phish-result" class="result hide">
+          <div style="display:flex; align-items:center; gap:10px; justify-content:space-between;">
+            <div><b>Result</b> <span id="phish-level" class="pill">Pending</span></div>
+            <div class="muted">Score: <b id="phish-score">—</b>/100</div>
+          </div>
+          <div class="hr"></div>
+          <div id="phish-findings"></div>
+        </div>
+      </div>
+      <div class="card span-4">
+        <h2>Heuristics</h2>
+        <ul class="list">
+          <li><span>Domain Risk</span> <span id="h-domain">—</span></li>
+          <li><span>Urgency Language</span> <span id="h-urgency">—</span></li>
+          <li><span>Creds Request</span> <span id="h-creds">—</span></li>
+          <li><span>Shortener / Obfuscation</span> <span id="h-short">—</span></li>
+          <li><span>Brand Spoof</span> <span id="h-brand">—</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- EMAIL SECURITY -->
+    <section id="view-email" class="grid hide">
+      <div class="card span-8">
+        <h1>Email Security Dashboard</h1>
+        <p class="muted">Connect your inbox (demo). We won't actually access email in this preview.</p>
+        <div class="btn-row">
+          <button class="btn" id="btn-connect">Connect Inbox (Demo)</button>
+          <span class="badge">OAuth 2.0</span>
+        </div>
+        <div class="hr"></div>
+        <div class="grid">
+          <div class="card span-6">
+            <h2>Today</h2>
+            <ul class="list">
+              <li><span>New emails scanned</span> <b id="em-new">0</b></li>
+              <li><span>Suspicious emails</span> <b id="em-sus">0</b></li>
+              <li><span>Blocked links</span> <b id="em-blk">0</b></li>
+            </ul>
+          </div>
+          <div class="card span-6">
+            <h2>Top Risky Senders</h2>
+            <ul class="list" id="em-senders">
+              <li><span class="muted">No data</span><span></span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="card span-4">
+        <h2>Reports</h2>
+        <p class="muted">Generate weekly or monthly reports with charts and export options.</p>
+        <div class="btn-row">
+          <a href="#/reports" class="btn">Open Reports</a>
+          <button class="btn ghost" id="btn-export">Export CSV</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- DEEPFAKE -->
+    <section id="view-deepfake" class="grid hide">
+      <div class="card span-8">
+        <h1>Deepfake Analyzer</h1>
+        <p class="muted">Upload a face image (or video frame). This preview simulates a classifier's output.</p>
+        <label for="df-file"><b>Upload Image</b></label>
+        <input id="df-file" type="file" accept="image/*"/>
+        <div class="btn-row" style="margin-top:10px;">
+          <button class="btn" id="btn-df-analyze">Analyze</button>
+          <button class="btn ghost" id="btn-df-clear">Clear</button>
+        </div>
+        <div id="df-preview" class="result hide" style="margin-top:10px;">
+          <div style="display:flex; gap:14px; align-items:flex-start;">
+            <img id="df-img" src="" alt="preview" style="max-width:160px; border-radius:10px; border:1px solid var(--border)"/>
+            <div>
+              <div><b>Authenticity</b> <span id="df-level" class="pill">—</span></div>
+              <p class="muted" style="margin:6px 0 10px;">Confidence: <b id="df-score">—</b></p>
+              <ul class="list" id="df-findings">
+                <li><span class="muted">No findings yet</span><span></span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card span-4">
+        <h2>What we check</h2>
+        <ul class="list">
+          <li><span>Edge artifacts (hair/ears/teeth)</span><span class="chip">Texture</span></li>
+          <li><span>Frequency cues</span><span class="chip">FFT</span></li>
+          <li><span>Face consistency</span><span class="chip">Landmarks</span></li>
+          <li><span>Noise signature</span><span class="chip">PRNU</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- REPORTS -->
+    <section id="view-reports" class="grid hide">
+      <div class="card span-8">
+        <h1>Reports</h1>
+        <p class="muted">Consolidated results from Phishing, Email, and Deepfake modules (demo data).</p>
+        <div class="grid">
+          <div class="card span-6">
+            <h2>Summary</h2>
+            <ul class="list">
+              <li><span>Total scans</span><b id="r-scans">0</b></li>
+              <li><span>Suspicious URLs</span><b id="r-urls">0</b></li>
+              <li><span>Risky senders</span><b id="r-senders">0</b></li>
+              <li><span>Likely deepfakes</span><b id="r-deep">0</b></li>
+            </ul>
+          </div>
+          <div class="card span-6">
+            <h2>Recent Alerts</h2>
+            <ul class="list" id="r-alerts">
+              <li><span class="muted">No alerts</span><span></span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="card span-4">
+        <h2>Export</h2>
+        <p class="muted">Download your report as JSON for integration.</p>
+        <div class="btn-row">
+          <button class="btn" id="btn-json">Download JSON</button>
+        </div>
+      </div>
+    </section>
+  <div class="footer">© 2025 CatSpy — Prototype Preview</div>
+  </main>
+
+  <script>
+    // Simple SPA Router
+    const routes = ["home","phishing","email","deepfake","reports"];
+    function route(){
+      const hash = location.hash.replace("#/","") || "";
+      const current = routes.includes(hash) ? hash : "home";
+      routes.forEach(r=>{
+        document.getElementById("view-"+r).classList.toggle("hide", r!==current);
+        document.getElementById("nav-"+(r==="home"?"home":r.slice(0,5))).classList.toggle("active", r===current);
+      });
+    }
+    window.addEventListener("hashchange", route);
+    window.addEventListener("load", route);
+
+    // Demo state
+    const state = {
+      scans:0, urls:0, senders:0, deepfakes:0,
+      alerts:[],
+      email:{ new:0, sus:0, blk:0, senders:[] }
+    };
+    const $ = s=>document.querySelector(s);
+
+    function resolveBackendOrigin(){
+      const locOrigin = window.location.origin;
+      if(!locOrigin || locOrigin === 'null' || locOrigin.startsWith('file:')){
+        return 'http://127.0.0.1:8000';
+      }
+      return locOrigin;
+    }
+
+    document.querySelectorAll('[data-logo]').forEach(img=>{
+      const asset = img.dataset.logo;
+      if(asset){
+        try{
+          img.src = `${resolveBackendOrigin()}/static/${asset}`;
+        }catch(err){
+          console.error('Failed to resolve logo asset', err);
+        }
+      }
+    });
+
+    function rerenderKPIs(){
+      $("#kpi-scans").textContent = state.scans;
+      $("#r-scans").textContent = state.scans;
+      $("#r-urls").textContent = state.urls;
+      $("#r-senders").textContent = state.senders;
+      $("#r-deep").textContent = state.deepfakes;
+      const rlist = $("#r-alerts");
+      rlist.innerHTML = state.alerts.length ? "" : '<li><span class="muted">No alerts</span><span></span></li>';
+      state.alerts.slice(-5).reverse().forEach(a=>{
+        const li = document.createElement("li");
+        li.innerHTML = `<span>${a}</span><span class="pill ${a.includes('Deepfake')?'danger':'suspicious'}">${a.includes('Deepfake')?'High':'Medium'}</span>`;
+        rlist.appendChild(li);
+      });
+      $("#em-new").textContent = state.email.new;
+      $("#em-sus").textContent = state.email.sus;
+      $("#em-blk").textContent = state.email.blk;
+      const sl = $("#em-senders");
+      sl.innerHTML = state.email.senders.length ? "" : '<li><span class="muted">No data</span><span></span></li>';
+      state.email.senders.forEach(s=>{
+        const li = document.createElement("li");
+        li.innerHTML = `<span>${s.name}</span><span class="pill suspicious">${s.count}</span>`;
+        sl.appendChild(li);
+      });
+    }
+
+    // Phishing analysis (calls backend /predict; falls back to mock on failure)
+    $("#btn-analyze").addEventListener("click", async ()=>{
+      const text = $("#phish-input").value.trim();
+      if(!text){ alert("Paste some text or a URL first."); return; }
+      $("#phish-result").classList.remove("hide");
+      const pill = $("#phish-level");
+      pill.className = "pill";
+      pill.textContent = "ANALYZING...";
+      $("#phish-score").textContent = "…";
+      $("#phish-findings").innerHTML = "<p class='muted'>Analyzing…</p>";
+
+      try{
+  const resp = await fetch(`${resolveBackendOrigin()}/predict`, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ text })
+        });
+        if(!resp.ok){
+          const txt = await resp.text();
+          throw new Error(`Server returned ${resp.status}: ${txt}`);
+        }
+        const data = await resp.json();
+
+        const levelClass = data.result === 'PHISHING' ? 'danger' : (data.result === 'SUSPICIOUS' ? 'suspicious' : 'safe');
+        pill.className = 'pill ' + levelClass;
+        pill.textContent = data.result;
+        $("#phish-score").textContent = data.score;
+
+        const h = data.heuristics || {};
+        $("#h-domain").textContent = h.domain_risk || '—';
+        $("#h-urgency").textContent = h.urgency_language || '—';
+        $("#h-creds").textContent = h.creds_request || '—';
+        $("#h-short").textContent = h.shortener_obfuscation || '—';
+        $("#h-brand").textContent = h.brand_spoof || '—';
+
+        const findings = (data.cues || []).map(c=>{
+          if(c.type === 'url') return `Contains link — ${c.details && c.details.domain ? c.details.domain : c.text}`;
+          if(c.type === 'keyword') return c.text;
+          if(c.type === 'credential_request') return `Requests credentials: ${c.text}`;
+          if(c.type === 'brand') return `Brand mentioned: ${c.text}`;
+          return c.text || JSON.stringify(c);
+        });
+        const fwrap = $("#phish-findings");
+        fwrap.innerHTML = findings.length ? "<ul class='list'>" + findings.map(f=>`<li><span>${f}</span><span></span></li>`).join("") + "</ul>" : "<p class='muted'>No risky cues found.</p>";
+
+        state.scans++;
+        state.urls += (data.result !== 'SAFE') ? 1 : 0;
+        if(data.result !== 'SAFE') state.alerts.push('Phishing risk detected ('+data.result+')');
+        rerenderKPIs();
+      }catch(err){
+        console.error(err);
+        const fallbackMsg = 'Backend unavailable, using local heuristics.';
+        $("#phish-findings").innerHTML = `<p class='muted'>${fallbackMsg}</p>`;
+        // Fallback: original mock scoring
+        const cues = {
+          domain:/http(s)?:\/\//i.test(text) ? 1 : 0,
+          urgency: /(urgent|immediately|now|locked|verify)/i.test(text) ? 1 : 0,
+          creds: /(password|bank|otp|account)/i.test(text) ? 1 : 0,
+          short: /(bit\.ly|t\.co|tinyurl|goo\.gl)/i.test(text) ? 1 : 0,
+          brand: /(paypal|bank|apple|microsoft)/i.test(text) ? 1 : 0,
+        };
+        const score = (cues.domain*18 + cues.urgency*28 + cues.creds*28 + cues.short*12 + cues.brand*14);
+        let level = 'safe';
+        if(score >= 60) level = 'danger';
+        else if(score >= 30) level = 'suspicious';
+
+        const pill2 = $("#phish-level");
+        pill2.className = 'pill ' + level;
+        pill2.textContent = level.toUpperCase();
+        $("#phish-score").textContent = score.toFixed(0);
+        $("#h-domain").textContent = cues.domain? 'risk' : 'ok';
+        $("#h-urgency").textContent = cues.urgency? 'present' : 'none';
+        $("#h-creds").textContent = cues.creds? 'present' : 'none';
+        $("#h-short").textContent = cues.short? 'present' : 'none';
+        $("#h-brand").textContent = cues.brand? 'suspected' : '—';
+
+        const findings = [
+          cues.domain? 'Contains link — validate domain ownership' : null,
+          cues.urgency? 'Uses urgency language' : null,
+          cues.creds? 'Requests credentials/financial info' : null,
+          cues.short? 'Uses URL shortener / obfuscation' : null,
+          cues.brand? 'Possible brand spoofing' : null,
+        ].filter(Boolean);
+        const fwrap2 = $("#phish-findings");
+        fwrap2.innerHTML = findings.length ? "<ul class='list'>" + findings.map(f=>`<li><span>${f}</span><span></span></li>`).join("") + "</ul>" : "<p class='muted'>No risky cues found.</p>";
+
+        state.scans++; state.urls += (level!=='safe'); 
+        if(level!=='safe') state.alerts.push('Phishing risk detected ('+level+')');
+        rerenderKPIs();
+      }
+    });
+
+    $("#btn-clear").addEventListener("click", ()=>{
+      $("#phish-input").value = "";
+      $("#phish-result").classList.add("hide");
+    });
+
+    // Email demo
+    $("#btn-connect").addEventListener("click", ()=>{
+      state.email.new += Math.floor(Math.random()*30)+20;
+      state.email.sus += Math.floor(Math.random()*5)+3;
+      state.email.blk += Math.floor(Math.random()*4)+2;
+      state.email.senders = [
+        {name:"no-reply@secure-update.com", count: 4},
+        {name:"support@billing-check.net", count: 3},
+        {name:"ops@notify-mail.cc", count: 2},
+      ];
+      state.senders = state.email.senders.length;
+      state.scans++;
+      state.alerts.push("Email scan completed — suspicious senders found");
+      rerenderKPIs();
+      alert("Demo: inbox connected & scanned!");
+    });
+
+    $("#btn-export").addEventListener("click", ()=>{
+      const csv = "sender,count\n" + state.email.senders.map(s=>`${s.name},${s.count}`).join("\n");
+      const blob = new Blob([csv], {type:"text/csv"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "risky_senders.csv"; a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Deepfake demo
+    let dfImageData = null;
+    $("#df-file").addEventListener("change", (e)=>{
+      const f = e.target.files[0];
+      if(!f) return;
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        dfImageData = reader.result;
+        $("#df-img").src = dfImageData;
+        $("#df-preview").classList.remove("hide");
+        $("#df-level").className = "pill"; $("#df-level").textContent = "—";
+        $("#df-score").textContent = "—";
+        $("#df-findings").innerHTML = '<li><span class="muted">Ready to analyze</span><span></span></li>';
+      };
+      reader.readAsDataURL(f);
+    });
+
+    $("#btn-df-analyze").addEventListener("click", ()=>{
+      if(!dfImageData){ alert("Please upload an image first."); return; }
+      // Mock prediction
+      const r = Math.random();
+      const level = r>0.75 ? "danger" : (r>0.4 ? "suspicious" : "safe");
+      const conf = (0.6 + Math.random()*0.35).toFixed(2);
+
+      const pill = $("#df-level");
+      pill.className = "pill " + level;
+      pill.textContent = (level==="safe"?"LIKELY REAL": level==="suspicious"?"UNCERTAIN":"LIKELY DEEPFAKE");
+      $("#df-score").textContent = conf;
+
+      const findings = [
+        level!=="safe" ? "Edge inconsistency near hair/ear" : "No visible artifacts detected",
+        level==="danger" ? "High-frequency anomalies (FFT)" : null,
+        level!=="safe" ? "Slight texture smoothing around mouth/teeth" : null,
+      ].filter(Boolean);
+      const ul = $("#df-findings");
+      ul.innerHTML = "";
+      findings.forEach(f=>{
+        const li = document.createElement("li");
+        li.innerHTML = `<span>${f}</span><span></span>`;
+        ul.appendChild(li);
+      });
+
+      state.scans++; state.deepfakes += (level==="danger");
+      if(level==="danger") state.alerts.push("Deepfake suspected (High)");
+      rerenderKPIs();
+    });
+
+    $("#btn-df-clear").addEventListener("click", ()=>{
+      dfImageData = null;
+      $("#df-file").value = "";
+      $("#df-preview").classList.add("hide");
+    });
+
+    // Reports JSON
+    $("#btn-json").addEventListener("click", ()=>{
+      const payload = {
+        scans: state.scans, urls: state.urls, senders: state.senders, deepfakes: state.deepfakes,
+        alerts: state.alerts.slice(-20),
+        email: state.email
+      };
+      const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "safeguard_report.json"; a.click();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>
