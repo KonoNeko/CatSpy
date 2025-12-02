@@ -4,3 +4,4 @@ peft
 fastapi
 uvicorn
 scikit-learn
+python-dateutil

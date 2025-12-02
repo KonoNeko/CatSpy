@@ -1,4 +1,4 @@
-"""
+﻿"""
 Fine-tune DistilBERT with LoRA (PEFT) on a small JSONL dataset.
 
 Usage example:
@@ -192,7 +192,7 @@ def main():
         per_device_eval_batch_size=args.per_device_eval_batch_size,
         learning_rate=args.lr,
         logging_steps=50,
-        evaluation_strategy='epoch' if eval_dataset is not None else 'no',
+        eval_strategy='epoch' if eval_dataset is not None else 'no',
         save_strategy='epoch' if eval_dataset is not None else 'no',
         load_best_model_at_end=True if eval_dataset is not None else False,
         metric_for_best_model='f1',

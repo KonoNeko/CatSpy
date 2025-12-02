@@ -1,32 +1,44 @@
 import torch
-from transformers import DistilBertTokenizer, DistilBertForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from pathlib import Path
 
-# Make PEFT optional to avoid import-time crashes when versions are incompatible
 try:
-    from peft import get_peft_model, LoraConfig, TaskType  # type: ignore
+    from peft import PeftModel  # type: ignore
     _PEFT_AVAILABLE = True
 except Exception as _peft_err:
-    print(f"Warning: PEFT not available or incompatible: {_peft_err}. Proceeding without PEFT/LoRA.")
-    get_peft_model = None  # type: ignore
-    LoraConfig = None      # type: ignore
-    TaskType = None        # type: ignore
+    print(f"Warning: PEFT not available: {_peft_err}")
+    PeftModel = None       # type: ignore
     _PEFT_AVAILABLE = False
 
 class PhishingDetector:
-    def __init__(self, model_name='distilbert-base-uncased', num_labels=2):
-        self.tokenizer = DistilBertTokenizer.from_pretrained(model_name)
-        self.model = DistilBertForSequenceClassification.from_pretrained(model_name, num_labels=num_labels)
-        # Try to apply LoRA/PEFT only if available. If it fails, continue without PEFT so the API can run.
-        if _PEFT_AVAILABLE and LoraConfig is not None and get_peft_model is not None and TaskType is not None:
+    def __init__(self, model_name='distilbert-base-uncased', num_labels=2, lora_adapter_path='lora_out_full'):
+        print(f"Loading tokenizer from {model_name}...")
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        
+        print(f"Loading base model from {model_name}...")
+        base_model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=num_labels)
+        
+        adapter_path = Path(__file__).parent / lora_adapter_path
+        adapter_file = adapter_path / "adapter_model.safetensors"
+        
+        if _PEFT_AVAILABLE and PeftModel is not None and adapter_path.exists() and adapter_file.exists():
             try:
-                lora_config = LoraConfig(task_type=TaskType.SEQ_CLS, r=8, lora_alpha=32, lora_dropout=0.1)
-                self.model = get_peft_model(self.model, lora_config)
-            except ValueError as e:
-                # Common failure: missing/invalid target_modules; continue without PEFT
-                print(f"Warning: PEFT/LoRA not applied: {e}. Running without PEFT.")
+                print(f"Loading LoRA adapter from {adapter_path}...")
+                self.model = PeftModel.from_pretrained(base_model, str(adapter_path))
+                print("LoRA adapter loaded successfully")
             except Exception as e:
-                # Other PEFT-related issues shouldn't block running the API
-                print(f"Warning: unexpected error applying PEFT/LoRA: {e}. Running without PEFT.")
+                print(f"Failed to load LoRA adapter: {e}")
+                print("Using base model without LoRA")
+                self.model = base_model
+        elif not adapter_path.exists() or not adapter_file.exists():
+            print(f"LoRA adapter not found at {adapter_path}")
+            print("Using base model without LoRA")
+            self.model = base_model
+        else:
+            print("PEFT not available. Using base model")
+            self.model = base_model
+        
+        self.model.eval()
 
     def train(self, texts, labels, epochs=2, lr=2e-5):
     
@@ -50,5 +62,4 @@ class PhishingDetector:
             logits = outputs.logits
             probs = torch.softmax(logits, dim=1)
             pred = torch.argmax(probs, dim=1).item()
-        # Return both predicted label and probability scores (list)
         return {"label": int(pred), "scores": probs[0].tolist()}
