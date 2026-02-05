@@ -1,0 +1,14 @@
+torch
+torchvision
+transformers
+peft
+fastapi
+uvicorn
+scikit-learn
+python-dateutil
+sqlalchemy
+opencv-python
+pillow
+matplotlib
+seaborn
+python-multipart

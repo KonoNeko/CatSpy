@@ -1,0 +1,11 @@
+{
+  "epochs": 3,
+  "batch_size": 64,
+  "learning_rate": 0.001,
+  "best_val_acc": 50.25,
+  "total_time_minutes": 2.0405309160550433,
+  "device": "cpu",
+  "gpu_name": "CPU",
+  "timestamp": "2026-01-23T01:10:16.138145",
+  "training_mode": "quick_synthetic_data"
+}
