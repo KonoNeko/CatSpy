@@ -21,6 +21,7 @@ env/
 # Model files (large)
 backend/lora_out/
 backend/lora_out_full/
+backend/deepfake_models/*.pth
 
 # Logs
 *.log
