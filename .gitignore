@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+backend/.venv/
+backend/venv/
+.venv/
+venv/
+ENV/
+env/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Model files (large)
+backend/lora_out/
+backend/lora_out_full/
+
+# Logs
+*.log
+backend/train.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Gmail API credentials (sensitive)
+backend/scripts/credentials.json
+backend/scripts/token.pickle
+backend/scripts/token.json
+
+# Test data
+backend/data/*.jsonl
+
+# Temporary files
+*.tmp
+*.bak
