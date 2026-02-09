@@ -19,7 +19,7 @@ import os
 class DeepfakeDetector:
     """ResNet-18 based deepfake detector for images and videos"""
     
-    def __init__(self, model_path: str = 'deepfake_models/resnet18_deepfake.pth', device: str = None):
+    def __init__(self, model_path: str = 'deepfake_models/resnet18_deepfake_custom.pth', device: str = None):
         """
         Initialize the deepfake detector
         
@@ -27,6 +27,13 @@ class DeepfakeDetector:
             model_path: Path to trained model weights
             device: Device to run inference on ('cuda', 'cpu', or None for auto-detect)
         """
+        # Set deterministic inference to avoid randomness
+        torch.manual_seed(42)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed(42)
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
+        
         self.device = device if device else ('cuda' if torch.cuda.is_available() else 'cpu')
         print(f"Using device: {self.device}")
         
@@ -101,6 +108,8 @@ class DeepfakeDetector:
         
         # Preprocess image
         input_tensor = self.transform(image).unsqueeze(0).to(self.device)
+        
+        self.model.eval()
         
         # Make prediction
         with torch.no_grad():

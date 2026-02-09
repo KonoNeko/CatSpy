@@ -22,6 +22,12 @@ env/
 backend/lora_out/
 backend/lora_out_full/
 backend/deepfake_models/*.pth
+backend/deepfake_models/*.safetensors
+
+# Training outputs
+backend/deepfake_models/*.json
+backend/deepfake_models/*.png
+*.png
 
 # Logs
 *.log
@@ -44,6 +50,10 @@ backend/scripts/token.json
 
 # Test data
 backend/data/*.jsonl
+backend/data/*.csv
+backend/data/deepfake_dataset/
+backend/data/pic*/
+backend/data/Video/
 
 # Temporary files
 *.tmp

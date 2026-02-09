@@ -48,8 +48,9 @@ detector = PhishingDetector()
 
 # Initialize deepfake detector
 try:
-    deepfake_detector = DeepfakeDetector()
-    print("✅ Deepfake detector initialized")
+    # Use custom trained model
+    deepfake_detector = DeepfakeDetector(model_path='deepfake_models/resnet18_deepfake_custom.pth')
+    print("✅ Deepfake detector initialized with custom trained model")
 except Exception as e:
     print(f"⚠️ Deepfake detector initialization failed: {e}")
     deepfake_detector = None

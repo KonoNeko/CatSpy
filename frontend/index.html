@@ -417,12 +417,21 @@ Examples:
   <script>
     // Simple SPA Router
     const routes = ["home","phishing","email","deepfake","reports"];
+    const navIds = {
+      "home": "nav-home",
+      "phishing": "nav-phish",
+      "email": "nav-email",
+      "deepfake": "nav-deep",
+      "reports": "nav-reports"
+    };
     function route(){
       const hash = location.hash.replace("#/","") || "";
       const current = routes.includes(hash) ? hash : "home";
       routes.forEach(r=>{
-        document.getElementById("view-"+r).classList.toggle("hide", r!==current);
-        document.getElementById("nav-"+(r==="home"?"home":r.slice(0,5))).classList.toggle("active", r===current);
+        const viewEl = document.getElementById("view-"+r);
+        if (viewEl) viewEl.classList.toggle("hide", r!==current);
+        const navEl = document.getElementById(navIds[r]);
+        if (navEl) navEl.classList.toggle("active", r===current);
       });
       
       // Load email data when navigating to email page
@@ -1018,14 +1027,18 @@ Examples:
 
 
 
-    $("#btn-export").addEventListener("click", ()=>{
-      const csv = "sender,count\n" + state.email.senders.map(s=>`${s.name},${s.count}`).join("\n");
-      const blob = new Blob([csv], {type:"text/csv"});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = "risky_senders.csv"; a.click();
-      URL.revokeObjectURL(url);
-    });
+    // Export button (optional - only exists on some pages)
+    const btnExport = $("#btn-export");
+    if (btnExport) {
+      btnExport.addEventListener("click", ()=>{
+        const csv = "sender,count\n" + state.email.senders.map(s=>`${s.name},${s.count}`).join("\n");
+        const blob = new Blob([csv], {type:"text/csv"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = "risky_senders.csv"; a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
 
     // Deepfake demo
     let dfImageData = null;
@@ -1044,34 +1057,81 @@ Examples:
       reader.readAsDataURL(f);
     });
 
-    $("#btn-df-analyze").addEventListener("click", ()=>{
+    $("#btn-df-analyze").addEventListener("click", async ()=>{
       if(!dfImageData){ alert("Please upload an image first."); return; }
-      // Mock prediction
-      const r = Math.random();
-      const level = r>0.75 ? "danger" : (r>0.4 ? "suspicious" : "safe");
-      const conf = (0.6 + Math.random()*0.35).toFixed(2);
-
-      const pill = $("#df-level");
-      pill.className = "pill " + level;
-      pill.textContent = (level==="safe"?"LIKELY REAL": level==="suspicious"?"UNCERTAIN":"LIKELY DEEPFAKE");
-      $("#df-score").textContent = conf;
-
-      const findings = [
-        level!=="safe" ? "Edge inconsistency near hair/ear" : "No visible artifacts detected",
-        level==="danger" ? "High-frequency anomalies (FFT)" : null,
-        level!=="safe" ? "Slight texture smoothing around mouth/teeth" : null,
-      ].filter(Boolean);
-      const ul = $("#df-findings");
-      ul.innerHTML = "";
-      findings.forEach(f=>{
-        const li = document.createElement("li");
-        li.innerHTML = `<span>${f}</span><span></span>`;
-        ul.appendChild(li);
-      });
-
-      state.scans++; state.deepfakes += (level==="danger");
-      if(level==="danger") state.alerts.push("Deepfake suspected (High)");
-      rerenderKPIs();
+      
+      const btn = $("#btn-df-analyze");
+      btn.disabled = true;
+      btn.textContent = "Analyzing...";
+      
+      try {
+        // 获取实际的文件对象
+        const fileInput = $("#df-file");
+        const file = fileInput.files[0];
+        
+        if (!file) {
+          alert("Please select an image file.");
+          return;
+        }
+        
+        // 调用真实的后端API
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch('/api/deepfake/detect-image', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        // 根据真实结果更新UI
+        const level = result.risk_level === 'high' ? 'danger' : 
+                     result.risk_level === 'medium' ? 'suspicious' : 'safe';
+        const conf = (result.confidence / 100).toFixed(2);
+        
+        const pill = $("#df-level");
+        pill.className = "pill " + level;
+        pill.textContent = result.is_deepfake ? "LIKELY DEEPFAKE" : 
+                          level === "suspicious" ? "UNCERTAIN" : "LIKELY REAL";
+        $("#df-score").textContent = conf;
+        
+        // 显示检测结果详情
+        const findings = [];
+        if (result.is_deepfake) {
+          findings.push(`Detected as AI-generated (${result.prediction})`);
+          findings.push(`Fake probability: ${result.probabilities.fake}%`);
+          findings.push(`Real probability: ${result.probabilities.real}%`);
+        } else {
+          findings.push(`Detected as real face`);
+          findings.push(`Real probability: ${result.probabilities.real}%`);
+          findings.push(`Fake probability: ${result.probabilities.fake}%`);
+        }
+        
+        const ul = $("#df-findings");
+        ul.innerHTML = "";
+        findings.forEach(f=>{
+          const li = document.createElement("li");
+          li.innerHTML = `<span>${f}</span><span></span>`;
+          ul.appendChild(li);
+        });
+        
+        state.scans++; 
+        state.deepfakes += result.is_deepfake ? 1 : 0;
+        if(result.is_deepfake) state.alerts.push(`Deepfake detected (${result.risk_level})`);
+        rerenderKPIs();
+        
+      } catch (error) {
+        console.error("Deepfake detection error:", error);
+        alert("Failed to analyze image: " + error.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Analyze";
+      }
     });
 
     $("#btn-df-clear").addEventListener("click", ()=>{
