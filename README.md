@@ -109,6 +109,27 @@ frontend/
 - **Model**: DistilBERT-base-uncased + LoRA
 - **Frontend**: Vanilla JavaScript + HTML5 + CSS3
 
+## Dependencies
+
+```
+torch
+torchvision
+transformers
+peft
+fastapi
+uvicorn
+scikit-learn
+python-dateutil
+sqlalchemy
+opencv-python
+pillow
+matplotlib
+seaborn
+python-multipart
+```
+
+Install: `pip install -r backend/requirements.txt`
+
 ## Configuration
 
 ### Gmail API (Optional)
